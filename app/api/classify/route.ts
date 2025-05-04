@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Client, predict } from "@gradio/client";
+import { Client } from "@gradio/client";
 
 // Define shared interfaces (Ideally import from a shared types file)
 interface Prediction {
@@ -21,8 +21,6 @@ interface PredictionErrorResponse {
   error: string;
   rawText?: string;
 }
-
-type PredictionResponse = PredictionSuccessResponse | PredictionErrorResponse;
 
 // --- Parsing logic (moved from lib/api.ts or duplicated/imported) ---
 function parseGradioResult(resultText: string): { topPrediction: Prediction | null, allPredictions: Prediction[] } {
@@ -83,12 +81,13 @@ async function base64ToBlob(base64: string, mimeType: string): Promise<Blob> {
 }
 
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse<PredictionSuccessResponse | PredictionErrorResponse>> {
   try {
     const { image: base64Image } = await request.json();
 
     if (!base64Image) {
-      return NextResponse.json({ error: 'No image data provided' }, { status: 400 });
+      const errorPayload: PredictionErrorResponse = { topPrediction: null, allPredictions: [], status: "error", error: 'No image data provided' };
+      return NextResponse.json(errorPayload, { status: 400 });
     }
 
     console.log("[API Route] Received image data (length):", base64Image.length);
@@ -148,11 +147,16 @@ export async function POST(request: Request) {
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API Route] Error during prediction:", error);
 
-    const errorMessage = error.message || 'Unknown server error';
-    const isLoading = errorMessage.includes("loading") || errorMessage.includes("try again");
+    let errorMessage = 'Unknown server error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+
     const isServiceUnavailable = errorMessage.includes("503") || errorMessage.includes("Service Unavailable");
 
     const errorResponse: PredictionErrorResponse = {

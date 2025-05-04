@@ -67,14 +67,22 @@ export async function predictDisease(image: File): Promise<PredictionResponse> {
 
     if (!response.ok) {
       let errorData;
+      let errorText = `API Route error: ${response.status} ${response.statusText}`; // Default text
       try {
           errorData = await response.json();
-      } catch (e) {
-          // Handle cases where the response is not JSON (e.g., plain text 503 error)
-          const errorText = await response.text();
-          throw new Error(errorData?.error || errorText || `API Route error: ${response.status} ${response.statusText}`);
+          if (errorData?.error) {
+            errorText = errorData.error; // Use error from JSON if available
+          }
+      } catch (_error) { // Catch JSON parsing error, ignore the error variable itself
+          // If JSON parsing fails, try to get plain text
+          try {
+             errorText = await response.text();
+          } catch (textError) {
+             console.error("Failed to get error text from response", textError);
+             // Keep the default errorText based on status code
+          }
       }
-      throw new Error(errorData?.error || `API Route error: ${response.status} ${response.statusText}`);
+      throw new Error(errorText);
     }
 
     // Parse the structured response from the API route
@@ -84,16 +92,24 @@ export async function predictDisease(image: File): Promise<PredictionResponse> {
     // The API route should return the correct PredictionResponse structure
     return result;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error calling /api/classify:", error);
     
-    // Simplified error handling for the client-side fetch
+    // Perform type check for error message
+    let message = 'Network error or API route failure';
+    if (error instanceof Error) {
+        message = error.message;
+    } else if (typeof error === 'string') {
+        message = error;
+    }
+    
+    // Return structured error
     return {
       topPrediction: null,
       allPredictions: [],
       status: "error",
-      error: `Failed to get prediction: ${error.message || 'Network error or API route failure'}`,
-      rawText: `Client-side error: ${error.message}`
+      error: `Failed to get prediction: ${message}`,
+      rawText: `Client-side error: ${message}`
     };
   }
 } 

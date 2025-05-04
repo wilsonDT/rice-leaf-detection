@@ -13,7 +13,6 @@ interface Prediction {
 interface ResultDisplayProps {
   topPrediction: Prediction | null; // Can be null if error or parsing failed
   allPredictions: Prediction[];
-  rawText?: string; // Optional raw text
 }
 
 interface DiseaseInfo {
@@ -80,7 +79,7 @@ const diseaseDatabase: Record<string, DiseaseInfo> = {
   }
 }
 
-export default function ResultDisplay({ topPrediction, allPredictions, rawText }: ResultDisplayProps) {
+export default function ResultDisplay({ topPrediction, allPredictions }: ResultDisplayProps) {
   const [diseaseInfo, setDiseaseInfo] = useState<DiseaseInfo | null>(null)
 
   useEffect(() => {
@@ -183,12 +182,6 @@ export default function ResultDisplay({ topPrediction, allPredictions, rawText }
                      </div>
                  ))}
             </div>
-            {/* Optionally display raw text if needed for debugging */}
-            {/* {rawText && (
-              <div className="p-4 bg-gray-100 font-mono overflow-x-auto border-t border-gray-200 text-xs">
-                <pre className="whitespace-pre-wrap">{rawText}</pre>
-              </div>
-            )} */}
           </div>
         )}
 

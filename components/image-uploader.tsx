@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
-import { Upload, X, Loader2, AlertTriangle, AlertCircle } from "lucide-react"
+import { useState, useRef } from "react"
+import { Upload, X, Loader2, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import { predictDisease } from "@/lib/api"
 import ResultDisplay from "./result-display"
@@ -92,8 +92,15 @@ export default function ImageUploader() {
         setError("Received response, but failed to extract prediction details. Please try again.")
         console.warn("Received success status but issue with prediction data:", response);
       }
-    } catch (err: any) {
-      setError(`An unexpected error occurred: ${err.message || 'Unknown client error'}`)
+    } catch (err: unknown) {
+      // Perform type check for error message
+      let message = 'Unknown client error';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === 'string') {
+        message = err;
+      }
+      setError(`An unexpected error occurred: ${message}`)
       console.error("handleSubmit Error:", err)
     } finally {
       setIsLoading(false)
