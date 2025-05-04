@@ -73,7 +73,7 @@ export async function predictDisease(image: File): Promise<PredictionResponse> {
           if (errorData?.error) {
             errorText = errorData.error; // Use error from JSON if available
           }
-      } catch (_error) { // Catch JSON parsing error, ignore the error variable itself
+      } catch { 
           // If JSON parsing fails, try to get plain text
           try {
              errorText = await response.text();

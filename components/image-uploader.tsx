@@ -186,7 +186,6 @@ export default function ImageUploader() {
           <ResultDisplay 
             topPrediction={result.topPrediction} 
             allPredictions={result.allPredictions}
-            rawText={result.rawText} 
           />
         )}
       </>
